@@ -1,9 +1,14 @@
-"""运行监控 分析看板服务：汇总指标、运行分析并生成模拟结果。"""
+"""运行监控 分析看板服务：汇总指标、运行分析并生成模拟结果。
+
+监控事件清单读取告警中心的告警关联处置数据包：时间范围、错误次数与处置主事件保持一致，
+告警中心结论由此同步到运行监控，两个模块看到的是同一份成功版本。
+"""
 from __future__ import annotations
 
 import random
 from typing import Any
 
+from app.services.alert_package import alert_package_service
 from app.store import store
 
 MODULE = "monitor"
@@ -37,6 +42,10 @@ class MonitorService:
                 "差异": round(random.uniform(-0.2, 0.3), 3),
             })
         return results
+
+    def list_alert_events(self, *, 监控对象: str | None = None) -> list[dict[str, Any]]:
+        """读取告警关联处置数据包生成监控事件清单（告警中心结论同步入口）。"""
+        return alert_package_service.monitor_events(监控对象=监控对象)
 
     def get_entry(self, entry_id: int) -> dict[str, Any] | None:
         return store.find(MODULE, entry_id)

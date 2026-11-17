@@ -39,6 +39,15 @@ def list_results() -> dict[str, Any]:
     return {"items": service.list_results()}
 
 
+@router.get("/alert-events")
+def list_alert_events(
+    监控对象: str | None = Query(default=None, description="按监控对象过滤同步过来的监控事件"),
+) -> dict[str, Any]:
+    """监控事件清单：读取告警中心关联处置包，时间范围与错误次数同处置主事件一致。"""
+    items = service.list_alert_events(监控对象=监控对象)
+    return {"items": items, "total": len(items)}
+
+
 @router.post("/run")
 def run_analysis(payload: EntryPayload) -> dict[str, Any]:
     results = service.run_analysis(payload.values)

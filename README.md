@@ -75,5 +75,21 @@ npm run dev
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
 
+## 告警关联处置数据包
+
+告警中心按「采集批次 + 监控对象」归并重复触发的告警规则，生成可处置的事件集合，
+实现在 `backend/app/services/alert_package.py`：
+
+- `POST /api/alert/packages`：提交处置包，处置包与监控事件快照一起写入；未关联到告警
+  事件的规则返回 `RULE_NOT_ASSOCIATED`，不能进入处置包。
+- 同一监控对象连续触发相同告警只保留一个处置主事件，后续触发写入事件明细、版本递增，
+  不重复建包；关闭/恢复命中同一主事件冲突时，以最后事件给出唯一最终处置状态。
+- 相同内容的并发或连续重复提交只保留一个成功版本，冲突返回 `409` 与
+  `PACKAGE_VERSION_CONFLICT`，响应回指首个成功版本。
+- `GET /api/alert/packages/dashboard` 与 `GET /api/alert/packages`：结果页看板与列表。
+- `GET /api/monitor/alert-events`：运行监控读取处置包生成监控事件清单，事件的时间范围、
+  错误次数与处置主事件完全一致，结论同步自告警中心同一份成功版本。
+- 既有告警规则接口（字段、`{ok,message,entry}` 契约、错误码）保持不变。
+
 领域：数据工程
 子方向：数据采集、爬虫与RPA
